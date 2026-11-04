@@ -1,0 +1,31 @@
+name: Sync publications from ORCID
+
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Fetch works from ORCID
+        run: node scripts/sync-orcid.mjs
+        env:
+          # Set in Settings → Secrets and variables → Actions → Variables, or put it in content/site.ts
+          ORCID_ID: ${{ vars.ORCID_ID }}
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- content/publications.json; then echo "No changes."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/publications.json
+          git commit -m "chore: sync publications from ORCID"
+          git push

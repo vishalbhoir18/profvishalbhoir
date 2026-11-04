@@ -1,0 +1,286 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>html,body{margin:0;background:#000}</style>
+  </head>
+  <body>
+    <script>
+      /**
+       * Procedural "micrographs" used as placeholder imagery.
+       * window.renderImage(kind, w, h, seed) → webp data URL.
+       */
+      function mkRng(seed) {
+        return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+      }
+
+      function bokeh(g, w, h, rng, n, colors) {
+        g.save();
+        g.globalCompositeOperation = "lighter";
+        for (let i = 0; i < n; i++) {
+          const x = rng() * w, y = rng() * h, r = 4 + rng() * 60;
+          const c = colors[Math.floor(rng() * colors.length)];
+          const grad = g.createRadialGradient(x, y, 0, x, y, r);
+          grad.addColorStop(0, c.replace("A", (0.06 + rng() * 0.12).toFixed(3)));
+          grad.addColorStop(1, c.replace("A", "0"));
+          g.fillStyle = grad;
+          g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+        }
+        g.restore();
+      }
+
+      function grain(g, w, h, rng, amt = 0.05) {
+        const img = g.getImageData(0, 0, w, h);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const n = (rng() - 0.5) * 255 * amt;
+          d[i] += n; d[i + 1] += n; d[i + 2] += n;
+        }
+        g.putImageData(img, 0, 0);
+      }
+
+      function vignette(g, w, h, k = 0.75) {
+        const v = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75);
+        v.addColorStop(0, "rgba(0,0,0,0)");
+        v.addColorStop(1, `rgba(0,0,0,${k})`);
+        g.fillStyle = v; g.fillRect(0, 0, w, h);
+      }
+
+      /* Budding yeast, fluorescence */
+      function yeast(g, w, h, rng) {
+        g.fillStyle = "#020406"; g.fillRect(0, 0, w, h);
+        bokeh(g, w, h, rng, 50, ["rgba(94,234,212,A)", "rgba(56,189,248,A)"]);
+        const cells = [];
+        for (let i = 0; i < 70; i++) {
+          const depth = rng();
+          cells.push({ x: rng() * w, y: rng() * h, r: (28 + rng() * 34) * (w / 1100), depth, a: rng() * Math.PI, bud: rng() < 0.45 });
+        }
+        cells.sort((a, b) => a.depth - b.depth);
+        for (const c of cells) {
+          const blur = Math.abs(c.depth - 0.6) * 14;
+          g.save();
+          g.filter = `blur(${blur.toFixed(1)}px)`;
+          g.globalCompositeOperation = "lighter";
+          const drawCell = (x, y, rx, ry, rot, nuc) => {
+            g.save(); g.translate(x, y); g.rotate(rot);
+            const body = g.createRadialGradient(0, 0, rx * 0.2, 0, 0, rx * 1.05);
+            body.addColorStop(0, "rgba(20,80,90,0.25)");
+            body.addColorStop(0.8, "rgba(40,160,170,0.18)");
+            body.addColorStop(1, "rgba(94,234,212,0)");
+            g.fillStyle = body; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.fill();
+            g.shadowColor = "rgba(94,234,212,0.9)"; g.shadowBlur = rx * 0.5;
+            g.strokeStyle = "rgba(140,245,225,0.85)"; g.lineWidth = Math.max(1.5, rx * 0.09);
+            g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.stroke();
+            g.shadowBlur = 0;
+            if (nuc) {
+              const n = g.createRadialGradient(-rx * 0.15, rx * 0.1, 0, -rx * 0.15, rx * 0.1, rx * 0.42);
+              n.addColorStop(0, "rgba(200,170,255,0.95)");
+              n.addColorStop(1, "rgba(167,139,250,0)");
+              g.fillStyle = n; g.beginPath(); g.arc(-rx * 0.15, rx * 0.1, rx * 0.42, 0, Math.PI * 2); g.fill();
+              const v = g.createRadialGradient(rx * 0.3, -ry * 0.3, 0, rx * 0.3, -ry * 0.3, rx * 0.35);
+              v.addColorStop(0, "rgba(244,114,182,0.0)");
+              v.addColorStop(0.8, "rgba(244,114,182,0.35)");
+              v.addColorStop(1, "rgba(244,114,182,0)");
+              g.fillStyle = v; g.beginPath(); g.arc(rx * 0.3, -ry * 0.3, rx * 0.35, 0, Math.PI * 2); g.fill();
+            }
+            g.restore();
+          };
+          drawCell(c.x, c.y, c.r, c.r * 1.22, c.a, true);
+          if (c.bud) {
+            const bx = c.x + Math.cos(c.a - Math.PI / 2) * c.r * 1.55;
+            const by = c.y + Math.sin(c.a - Math.PI / 2) * c.r * 1.55;
+            drawCell(bx, by, c.r * 0.55, c.r * 0.62, c.a, false);
+          }
+          g.restore();
+        }
+        vignette(g, w, h, 0.7);
+        grain(g, w, h, rng, 0.06);
+      }
+
+      /* Branching filaments radiating from colonies (fungal hyphae / actinomycetes).
+         Drawn into three depth layers, each blurred + bloomed once (fast). */
+      function hyphae(g, w, h, rng, palette = "teal") {
+        const amber = palette === "amber";
+        const cols = amber
+          ? ["rgba(251,191,36,A)", "rgba(253,224,71,A)", "rgba(249,146,60,A)"]
+          : ["rgba(94,234,212,A)", "rgba(56,189,248,A)", "rgba(134,239,172,A)"];
+        g.fillStyle = amber ? "#050302" : "#010306"; g.fillRect(0, 0, w, h);
+        bokeh(g, w, h, rng, 40, cols);
+        const scale = Math.max(w, h) / 1400;
+        const layers = [0, 1, 2].map(() => {
+          const c = document.createElement("canvas"); c.width = w; c.height = h;
+          const x = c.getContext("2d"); x.lineCap = "round"; x.lineJoin = "round";
+          return { c, x };
+        });
+        const nCol = amber ? 2 : Math.max(3, Math.round((w * h) / 650000));
+        const tips = [];
+        for (let k = 0; k < nCol; k++) {
+          // stratified across the width so the frame fills evenly
+          const cx = w * ((k + 0.2 + rng() * 0.6) / nCol), cy = h * (0.2 + rng() * 0.6);
+          const roots = amber ? 22 : 24;
+          for (let i = 0; i < roots; i++) {
+            const a = (i / roots) * Math.PI * 2 + rng() * 0.3;
+            tips.push({ x: cx + Math.cos(a) * 20 * scale, y: cy + Math.sin(a) * 20 * scale, a, life: 120 + rng() * 140, width: (3.2 + rng() * 1.5) * scale, layer: Math.floor(rng() * 3), phase: rng() * 10, col: cols[Math.floor(rng() * cols.length)] });
+          }
+        }
+        let guard = 0;
+        while (tips.length && guard++ < 1600) {
+          const t = tips.pop();
+          const L = layers[t.layer].x;
+          let { x, y, a } = t;
+          const seg = 6 * scale;
+          L.beginPath(); L.moveTo(x, y);
+          for (let s = 0; s < t.life; s++) {
+            a += Math.sin(s * 0.06 + t.phase) * 0.035 + (rng() - 0.5) * 0.08;
+            x += Math.cos(a) * seg; y += Math.sin(a) * seg;
+            L.lineTo(x, y);
+            if (rng() < 0.028 && t.width > 0.9 * scale) {
+              tips.push({ ...t, x, y, a: a + (rng() < 0.5 ? 1 : -1) * (0.45 + rng() * 0.5), life: t.life * (0.45 + rng() * 0.35), width: t.width * 0.72, layer: rng() < 0.7 ? t.layer : Math.floor(rng() * 3), phase: rng() * 10 });
+            }
+          }
+          L.strokeStyle = t.col.replace("A", "0.85"); L.lineWidth = t.width; L.stroke();
+          L.strokeStyle = "rgba(255,255,255,0.35)"; L.lineWidth = t.width * 0.3; L.stroke();
+          if (amber) {
+            for (let k = 0; k < 7; k++) {
+              L.fillStyle = t.col.replace("A", "0.9");
+              L.beginPath(); L.arc(x + Math.cos(a) * k * t.width * 2.2, y + Math.sin(a) * k * t.width * 2.2, t.width * 0.95, 0, Math.PI * 2); L.fill();
+            }
+          } else if (rng() < 0.55) {
+            // blastoconidia: little clusters of yeast cells budding off hyphae
+            for (let k = 0; k < 1 + Math.floor(rng() * 3); k++) {
+              const bx = x + (rng() - 0.5) * t.width * 8, by = y + (rng() - 0.5) * t.width * 8, br = t.width * (2.2 + rng() * 1.5);
+              L.fillStyle = "rgba(167,139,250,0.35)"; L.strokeStyle = "rgba(196,181,253,0.9)"; L.lineWidth = Math.max(1, t.width * 0.4);
+              L.beginPath(); L.ellipse(bx, by, br, br * 1.2, rng() * 3, 0, Math.PI * 2); L.fill(); L.stroke();
+            }
+          }
+        }
+        const blur = [7 * scale, 2 * scale, 0];
+        const alpha = [0.45, 0.75, 1];
+        g.globalCompositeOperation = "lighter";
+        layers.forEach((l, i) => {
+          g.globalAlpha = alpha[i] * 0.7;
+          g.filter = `blur(${(blur[i] + 14 * scale).toFixed(1)}px)`; // bloom
+          g.drawImage(l.c, 0, 0);
+          g.globalAlpha = alpha[i];
+          g.filter = blur[i] ? `blur(${blur[i].toFixed(1)}px)` : "none";
+          g.drawImage(l.c, 0, 0);
+        });
+        g.filter = "none"; g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+        vignette(g, w, h, 0.7);
+        grain(g, w, h, rng, 0.035);
+      }
+
+      /* Agarose gel: glowing bands */
+      function gel(g, w, h, rng) {
+        const bg = g.createLinearGradient(0, 0, 0, h);
+        bg.addColorStop(0, "#07060f"); bg.addColorStop(1, "#0d0a1c");
+        g.fillStyle = bg; g.fillRect(0, 0, w, h);
+        const lanes = 7, lw = w / (lanes + 1);
+        g.globalCompositeOperation = "lighter";
+        for (let l = 0; l < lanes; l++) {
+          const cx = lw * (l + 1);
+          // well
+          g.fillStyle = "rgba(255,255,255,0.06)"; g.fillRect(cx - lw * 0.32, h * 0.07, lw * 0.64, h * 0.012);
+          const bands = l === 0
+            ? Array.from({ length: 11 }, (_, k) => 0.16 + Math.pow(k / 10, 0.8) * 0.7)
+            : Array.from({ length: 2 + Math.floor(rng() * 3) }, () => 0.2 + rng() * 0.65);
+          bands.forEach((by, k) => {
+            const y = h * by + Math.pow((cx - w / 2) / w, 2) * h * 0.05; // smile
+            const strength = l === 0 ? 0.45 + (k % 3 === 0 ? 0.3 : 0) : 0.4 + rng() * 0.6;
+            const bh = h * (0.008 + rng() * 0.006);
+            for (let pass = 0; pass < 3; pass++) {
+              g.filter = `blur(${[14, 5, 1.2][pass]}px)`;
+              g.fillStyle = `rgba(${pass === 2 ? "235,225,255" : "167,139,250"},${strength * [0.5, 0.6, 0.9][pass]})`;
+              g.beginPath();
+              g.ellipse(cx, y, lw * 0.33, bh * [3, 1.6, 1][pass], 0, 0, Math.PI * 2);
+              g.fill();
+            }
+          });
+          // smear
+          g.filter = "blur(18px)";
+          g.fillStyle = "rgba(167,139,250,0.05)"; g.fillRect(cx - lw * 0.25, h * 0.1, lw * 0.5, h * 0.75);
+        }
+        g.filter = "none"; g.globalCompositeOperation = "source-over";
+        vignette(g, w, h, 0.6);
+        grain(g, w, h, rng, 0.07);
+      }
+
+      /* 96-well plate with resazurin checkerboard (blue = inhibited, pink = growth) */
+      function plate(g, w, h, rng) {
+        g.fillStyle = "#050507"; g.fillRect(0, 0, w, h);
+        const tmp = document.createElement("canvas"); tmp.width = w; tmp.height = h;
+        const t = tmp.getContext("2d");
+        t.translate(w / 2, h / 2); t.rotate(-0.22);
+        const cols = 12, rows = 8, pitch = Math.max(w, h) / 7.2;
+        const pw = cols * pitch, ph = rows * pitch;
+        t.fillStyle = "#121216";
+        t.beginPath(); t.roundRect(-pw / 2 - pitch * 0.5, -ph / 2 - pitch * 0.5, pw + pitch, ph + pitch, pitch * 0.4); t.fill();
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const x = -pw / 2 + (c + 0.5) * pitch, y = -ph / 2 + (r + 0.5) * pitch;
+          // checkerboard synergy: inhibited when combined dose high enough (concave isobole)
+          const a = c / (cols - 1), b = r / (rows - 1);
+          const inhibited = Math.pow(a, 0.5) + Math.pow(b, 0.5) > 1.15 || a > 0.9 || b > 0.92;
+          const col = inhibited ? [70, 90, 220] : [236, 72, 153];
+          const jitter = (rng() - 0.5) * 30;
+          const rw = pitch * 0.38;
+          const well = t.createRadialGradient(x - rw * 0.25, y - rw * 0.25, rw * 0.1, x, y, rw);
+          well.addColorStop(0, `rgba(${col[0] + 60 + jitter},${col[1] + 60},${col[2] + 40},0.95)`);
+          well.addColorStop(0.75, `rgba(${col[0]},${col[1]},${col[2]},0.9)`);
+          well.addColorStop(1, `rgba(${col[0] * 0.4},${col[1] * 0.4},${col[2] * 0.4},0.95)`);
+          t.fillStyle = "#08080a"; t.beginPath(); t.arc(x, y, rw * 1.15, 0, Math.PI * 2); t.fill();
+          t.shadowColor = `rgba(${col[0]},${col[1]},${col[2]},0.8)`; t.shadowBlur = rw * 0.8;
+          t.fillStyle = well; t.beginPath(); t.arc(x, y, rw, 0, Math.PI * 2); t.fill();
+          t.shadowBlur = 0;
+          t.fillStyle = "rgba(255,255,255,0.35)"; t.beginPath(); t.ellipse(x - rw * 0.35, y - rw * 0.4, rw * 0.25, rw * 0.12, -0.6, 0, Math.PI * 2); t.fill();
+        }
+        // tilt-shift: sharp centre band, blurred top/bottom
+        g.filter = "blur(10px)"; g.drawImage(tmp, 0, 0); g.filter = "none";
+        const mask = document.createElement("canvas"); mask.width = w; mask.height = h;
+        const m = mask.getContext("2d");
+        m.drawImage(tmp, 0, 0);
+        m.globalCompositeOperation = "destination-in";
+        const lg = m.createLinearGradient(0, 0, 0, h);
+        lg.addColorStop(0, "rgba(0,0,0,0)"); lg.addColorStop(0.35, "rgba(0,0,0,1)"); lg.addColorStop(0.65, "rgba(0,0,0,1)"); lg.addColorStop(1, "rgba(0,0,0,0)");
+        m.fillStyle = lg; m.fillRect(0, 0, w, h);
+        g.drawImage(mask, 0, 0);
+        vignette(g, w, h, 0.7);
+        grain(g, w, h, rng, 0.05);
+      }
+
+      /* Nano-emulsion droplets, dark-field */
+      function droplets(g, w, h, rng) {
+        g.fillStyle = "#010307"; g.fillRect(0, 0, w, h);
+        bokeh(g, w, h, rng, 70, ["rgba(56,189,248,A)", "rgba(94,234,212,A)", "rgba(167,139,250,A)"]);
+        g.globalCompositeOperation = "lighter";
+        for (let i = 0; i < 260; i++) {
+          const depth = rng();
+          const r = (4 + Math.pow(rng(), 2.5) * 70) * (w / 1100);
+          const x = rng() * w, y = rng() * h;
+          g.filter = `blur(${(Math.abs(depth - 0.6) * 12).toFixed(1)}px)`;
+          g.strokeStyle = `rgba(125,211,252,${0.35 + rng() * 0.5})`;
+          g.lineWidth = Math.max(1, r * 0.08);
+          g.shadowColor = "rgba(56,189,248,0.9)"; g.shadowBlur = r * 0.6;
+          g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke();
+          g.shadowBlur = 0;
+          const core = g.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
+          core.addColorStop(0, "rgba(220,245,255,0.35)"); core.addColorStop(0.5, "rgba(56,189,248,0.06)"); core.addColorStop(1, "rgba(56,189,248,0)");
+          g.fillStyle = core; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+        }
+        g.filter = "none"; g.globalCompositeOperation = "source-over";
+        vignette(g, w, h, 0.7);
+        grain(g, w, h, rng, 0.05);
+      }
+
+      const kinds = { yeast, hyphae, gel, plate, droplets, "hyphae-amber": (g, w, h, r) => hyphae(g, w, h, r, "amber") };
+
+      window.renderImage = (kind, w, h, seed = 7) => {
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const g = c.getContext("2d", { willReadFrequently: true });
+        kinds[kind](g, w, h, mkRng(seed));
+        return c.toDataURL("image/webp", 0.86);
+      };
+      window.sceneReady = true;
+    </script>
+  </body>
+</html>

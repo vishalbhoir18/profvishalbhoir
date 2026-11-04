@@ -1,0 +1,252 @@
+{
+  "_note": "SAMPLE DATA: replace with your publications, or set site.orcid and run `npm run sync:orcid`. Fields: title, authors[], year, venue, type (journal|review|chapter|conference|patent|book), topics[], featured, abstract?, doi, url.",
+  "items": [
+    {
+      "id": "sample-01",
+      "title": "Bioactive metabolites from an endophytic fungus inhibit azole-resistant Candida albicans",
+      "authors": [
+        "Scholar A",
+        "V. Bhoir"
+      ],
+      "year": 2025,
+      "venue": "Sample Journal of Applied Microbiology",
+      "type": "journal",
+      "topics": [
+        "Antifungal discovery",
+        "Metabolites"
+      ],
+      "featured": true,
+      "abstract": "Bioassay-guided fractionation of an endophyte extract yielded a fraction with potent fungicidal activity against clinical azole-resistant isolates, with low cytotoxicity in human cell lines.",
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-02",
+      "title": "Synergistic interaction of a plant-derived phenolic with fluconazole against Candida biofilms",
+      "authors": [
+        "Scholar D",
+        "Scholar B",
+        "V. Bhoir"
+      ],
+      "year": 2025,
+      "venue": "Sample Journal of Medical Mycology",
+      "type": "journal",
+      "topics": [
+        "Synergy",
+        "Antifungal discovery"
+      ],
+      "featured": true,
+      "abstract": "Checkerboard and time-kill assays revealed strong synergy (FICI ≤ 0.5) that restored fluconazole activity against biofilm-forming strains.",
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-03",
+      "title": "Down-regulation of CDR1 and ERG11 expression underlies the anticandidal action of a novel compound",
+      "authors": [
+        "V. Bhoir",
+        "Scholar B",
+        "A. Collaborator"
+      ],
+      "year": 2024,
+      "venue": "Sample Journal of Antimicrobial Research",
+      "type": "journal",
+      "topics": [
+        "Resistance mechanisms"
+      ],
+      "featured": true,
+      "abstract": "qRT-PCR, sorbitol protection and ergosterol binding assays point to the fungal membrane as the primary target, with reduced efflux pump expression.",
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-04",
+      "title": "A stable topical nano-emulgel of an antifungal natural product: formulation and evaluation",
+      "authors": [
+        "Scholar C",
+        "V. Bhoir"
+      ],
+      "year": 2024,
+      "venue": "Sample Journal of Drug Delivery",
+      "type": "journal",
+      "topics": [
+        "Formulation"
+      ],
+      "featured": false,
+      "abstract": "An optimised nano-emulgel showed sustained release, six-month stability and superior ex vivo antifungal efficacy compared with a conventional gel.",
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-05",
+      "title": "Antifungal resistance in clinical Candida isolates: a regional surveillance study",
+      "authors": [
+        "V. Bhoir",
+        "B. Collaborator",
+        "C. Collaborator"
+      ],
+      "year": 2023,
+      "venue": "Sample Indian Journal of Microbiology",
+      "type": "journal",
+      "topics": [
+        "Resistance mechanisms"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-06",
+      "title": "Marine actinomycetes as an untapped source of antifungal compounds",
+      "authors": [
+        "Dr. Alumnus B",
+        "V. Bhoir"
+      ],
+      "year": 2023,
+      "venue": "Sample Marine Drugs Review",
+      "type": "review",
+      "topics": [
+        "Metabolites"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-07",
+      "title": "Essential oils as anti-biofilm agents against non-albicans Candida species",
+      "authors": [
+        "Dr. Alumnus A",
+        "V. Bhoir"
+      ],
+      "year": 2022,
+      "venue": "Sample Journal of Applied Microbiology",
+      "type": "journal",
+      "topics": [
+        "Antifungal discovery"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-08",
+      "title": "Time-kill kinetics and post-antifungal effect of selected phytochemicals",
+      "authors": [
+        "V. Bhoir",
+        "Scholar A"
+      ],
+      "year": 2022,
+      "venue": "Proceedings of the Sample Microbiology Congress",
+      "type": "conference",
+      "topics": [
+        "Antifungal discovery"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-09",
+      "title": "Natural products against fungal pathogens: from bench to formulation",
+      "authors": [
+        "V. Bhoir"
+      ],
+      "year": 2021,
+      "venue": "Advances in Medical Mycology (Book chapter, Sample Press)",
+      "type": "chapter",
+      "topics": [
+        "Formulation",
+        "Antifungal discovery"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-10",
+      "title": "Checkerboard microdilution made practical: a protocol for synergy screening",
+      "authors": [
+        "V. Bhoir",
+        "Scholar D"
+      ],
+      "year": 2021,
+      "venue": "Sample Methods in Microbiology",
+      "type": "journal",
+      "topics": [
+        "Synergy"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-11",
+      "title": "Ergosterol biosynthesis as a target for new antifungals: a review",
+      "authors": [
+        "V. Bhoir"
+      ],
+      "year": 2020,
+      "venue": "Sample Reviews in Mycology",
+      "type": "review",
+      "topics": [
+        "Resistance mechanisms"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-12",
+      "title": "Isolation of soil Streptomyces with broad-spectrum antimicrobial activity",
+      "authors": [
+        "V. Bhoir",
+        "D. Collaborator"
+      ],
+      "year": 2019,
+      "venue": "Sample Journal of Basic Microbiology",
+      "type": "journal",
+      "topics": [
+        "Metabolites"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-13",
+      "title": "Antimicrobial composition comprising a plant-derived phenolic and an azole",
+      "authors": [
+        "V. Bhoir",
+        "Scholar B"
+      ],
+      "year": 2022,
+      "venue": "Indian Patent Application (sample)",
+      "type": "patent",
+      "topics": [
+        "Synergy",
+        "Formulation"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    },
+    {
+      "id": "sample-14",
+      "title": "Biofilm formation and antifungal tolerance in Candida tropicalis",
+      "authors": [
+        "V. Bhoir",
+        "E. Collaborator"
+      ],
+      "year": 2018,
+      "venue": "Sample Journal of Medical Microbiology",
+      "type": "journal",
+      "topics": [
+        "Resistance mechanisms"
+      ],
+      "featured": false,
+      "doi": "",
+      "url": ""
+    }
+  ]
+}
