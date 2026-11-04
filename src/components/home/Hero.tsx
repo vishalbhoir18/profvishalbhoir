@@ -94,8 +94,10 @@ export function Hero() {
           { opacity: 0, y: -80, scale: 0.94, filter: "blur(14px)", duration: 1.1, ease: "power2.in", ...out },
           0,
         )
-          .fromTo("[data-hero-meta]", { opacity: 1, y: 0 }, { opacity: 0, y: -30, duration: 0.6, ...out }, 0)
-          .fromTo("[data-hero-scroll]", { opacity: 1 }, { opacity: 0, duration: 0.4, ...out }, 0)
+          // Start a hair after 0 so the scrubbed timeline's first render doesn't
+          // override the intro fade-in of these elements.
+          .fromTo("[data-hero-meta]", { opacity: 1, y: 0 }, { opacity: 0, y: -30, duration: 0.6, ...out }, 0.02)
+          .fromTo("[data-hero-scroll]", { opacity: 1 }, { opacity: 0, duration: 0.4, ...out }, 0.02)
           .fromTo("[data-hero-rail]", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.6)
           .fromTo(s, { camZ: 8, rotY: 0, lift: 1 }, { camZ: 4.7, rotY: 1.3, lift: 0, duration: 2.2, ease: "power1.inOut", immediateRender: false }, 0)
           .fromTo("[data-hero-scrim]", { opacity: 0 }, { opacity: 1, duration: 0.8, immediateRender: false }, 0.5);
